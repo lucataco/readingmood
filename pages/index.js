@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
-import Head from 'next/head';
-import NextImage from 'next/image';
+import { useState } from "react";
+import Head from "next/head";
+import NextImage from "next/image";
 import {
   chakra,
   Box,
+  Card,
+  CardBody,
   Heading,
   Container,
   Text,
@@ -11,8 +13,19 @@ import {
   Stack,
   Link,
   Input,
+  Spinner,
   createIcon,
-} from '@chakra-ui/react';
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  UnorderedList,
+  ListItem,
+} from "@chakra-ui/react";
 
 const Image = chakra(NextImage, {
   shouldForwardProp: (prop) =>
@@ -29,115 +42,182 @@ const Image = chakra(NextImage, {
 });
 
 const Home = () => {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [gptResponse, setGptResponse] = useState(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const generateAction = async () => {
-    if(isGenerating) return;
-    console.log("--generateAction index--")
+    onOpen();
+    if (isGenerating) return;
+    console.log("--generateAction index--");
     setIsGenerating(true);
 
-    console.log("--generateAction input--")
-    console.log(input)
+    console.log("--generateAction input--");
+    // console.log(input);
 
-    const response = await fetch('/api/generate', {
-      method: 'POST',
+    const response = await fetch("/api/generate", {
+      method: "POST",
       headers: {
-        'Content-Type': 'image/jpeg',
+        "Content-Type": "image/jpeg",
       },
       body: JSON.stringify({ input }),
     });
-    const data = await response?.choices[0]?.text;
+    const data = await response.json();
+    console.log(data);
+    setGptResponse(data);
 
-    console.log("--generateAction index data--")
-    console.log(data)
-  
+    console.log("--generateAction index data--");
+    // console.log(data);
     setIsGenerating(false);
   };
-  
+
+  const renderModal = () => {
+    console.log(gptResponse);
+    const data = JSON.parse(gptResponse);
+    console.log(data);
+    const genre = data.Genre;
+    const mood = data.Mood;
+    const songs = data.Songs;
+    console.log("--renderModal--");
+    console.log(genre);
+    console.log(mood);
+    console.log(songs);
+    return (
+      <>
+        <Text>Genre:{genre}</Text>
+        <Text>Mood:{mood}</Text>
+        <Text>Song1:{songs[0]}</Text>
+
+        {songs.map((val, i) => {
+          <Text>{songs[i]}</Text>;
+        })}
+      </>
+    );
+  };
+
   const onChange = (event) => {
     setInput(event.target.value);
   };
 
+  // Closing modal
+  const closeModal = () => {
+    setGptResponse(null);
+    onClose();
+  };
+
   return (
-    <div className='root'>
+    <div className="root">
       <Head>
         <title>ReadingMood</title>
       </Head>
-      <Container maxW={'3xl'}>
+      <Container maxW={"3xl"}>
         <Stack
           as={Box}
-          textAlign={'center'}
-          align={'center'}
+          textAlign={"center"}
+          align={"center"}
           spacing={{ base: 8, md: 14 }}
           py={{ base: 10, md: 20 }}
-          >
-            <Image
-              src={"/readingMoodLogo2.png"}
-              alt="logo"
-              width="400"
-              height="400"
-              fallbackSrc='https://via.placeholder.com/400'
-            />
+        >
+          <Image
+            src={"/readingMoodLogo2.png"}
+            alt="logo"
+            width="300"
+            height="300"
+            fallbackSrc="https://via.placeholder.com/300"
+          />
           <Heading
             fontWeight={600}
-            fontSize={{ base: '2xl', sm: '4xl', md: '6xl' }}
-            lineHeight={'110%'}>
+            fontSize={{ base: "2xl", sm: "4xl", md: "6xl" }}
+            lineHeight={"110%"}
+          >
             The perfect songs for <br />
-            <Text as="b" color={'orange.400'}>
+            <Text as="b" color={"orange.400"}>
               your book
             </Text>
           </Heading>
-          <Text color={'white.500'}>
-            Discover the perfect songs for your next book with our book-song 
+          <Text color={"white.500"}>
+            Discover the perfect songs for your next book with our book-song
             matching service. Try it now and experience the emotional connection
-            between literature and music like never before. Search for your favorite
-            book and get a curated list of songs that relate to both the theme and mood. 
-            Start your journey now, click the search button and let's match your next 
-            book with the perfect soundtrack!
+            between literature and music like never before. Search for your
+            favorite book and get a curated list of songs that relate to both
+            the genre and mood. Start your journey now, click the search button
+            and let's match your next book with the perfect soundtrack!
           </Text>
-            <Stack
-              direction={'row'}
-              spacing={2}
-              width="80%"
-              align={'center'}
-              alignSelf={'center'}
-              position={'relative'}>
-              <Input 
-                size='lg' 
-                placeholder='Your book title' 
-                onChange={onChange}/>
-              <Button
-                colorScheme={'orange'}
-                bg={'orange.400'}
-                rounded={'full'}
-                px={6}
-                isLoading={isGenerating}
-                onClick={generateAction}
-                _hover={{
-                  bg: 'orange.500',
-                }}>
-                Search
-              </Button>
-            </Stack>
+          <Stack
+            direction={"row"}
+            spacing={2}
+            width="80%"
+            align={"center"}
+            alignSelf={"center"}
+            position={"relative"}
+          >
+            <Input
+              size="lg"
+              placeholder="Your book title"
+              onChange={onChange}
+            />
+            <Button
+              colorScheme={"orange"}
+              bg={"orange.400"}
+              rounded={"full"}
+              px={6}
+              isLoading={isGenerating}
+              onClick={generateAction}
+              _hover={{
+                bg: "orange.500",
+              }}
+            >
+              Search
+            </Button>
+          </Stack>
         </Stack>
       </Container>
-      <Box
-        position={"absolute"}
-        bottom={0}
-        width="100%"
-        color={'gray.200'}>
+      <Box position={"absolute"} bottom={0} width="100%" color={"gray.200"}>
         <Container
           as={Stack}
-          maxW={'6xl'}
+          maxW={"6xl"}
           py={4}
-          direction={'column'}
+          direction={"column"}
           spacing={4}
-          justify={'center'}
-          align={'center' }>
-          <Text>© 2023 <Link href='https://catacolabs.com' isExternal>CatacoLabs</Link></Text>
+          justify={"center"}
+          align={"center"}
+        >
+          <Text>
+            © 2023{" "}
+            <Link href="https://catacolabs.com" isExternal>
+              CatacoLabs
+            </Link>
+          </Text>
         </Container>
       </Box>
+      <>
+        <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Recommended Songs:</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              {!gptResponse ? (
+                <Spinner
+                  thickness="4px"
+                  speed="0.65s"
+                  emptyColor="gray.200"
+                  color="orange.500"
+                  size="xl"
+                />
+              ) : (
+                renderModal()
+              )}
+            </ModalBody>
+            <ModalFooter>
+              <Button colorScheme="blue" mr={3} onClick={closeModal}>
+                Close
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      </>
     </div>
   );
 };
@@ -147,8 +227,8 @@ export default Home;
 //https://openlibrary.org/search.json?limit=5&fields=title&title=the+lord+of
 
 const Arrow = createIcon({
-  displayName: 'Arrow',
-  viewBox: '0 0 72 24',
+  displayName: "Arrow",
+  viewBox: "0 0 72 24",
   path: (
     <path
       fillRule="evenodd"

@@ -1,27 +1,36 @@
 const generateAction = async (req, res) => {
-    const input = JSON.parse(req.body).input;
-    console.log("--generate api--")
-    console.log(input)
+  const input = req.body.input;
+  console.log("--generate api--");
+  console.log(input);
+  var inputStr =
+    "Given a Title of a book, return a json block with a Genre, and Mood property that describes the genre and mood of the given book Title. Also add a Songs property that contains a list of 5 songs that relate to the Genre, and Mood property. Title: " +
+    input +
+    ". JSON:";
 
-    const response = await fetch("https://api.openai.com/v1/completions", {
-        body: 
-        '{\n "model": "text-davinci-003",\n  "prompt": "Given a book Title, return a json block with a Theme property for the theme of the book, and a property for the Mood of the book. Also add a Songs property that contains a list of 5 songs that relate to both the Theme and the Mood. Title:' +
-        input + '. JSON:",\n  "max_tokens": 256,\n  "temperature": 0.7\n}',
-        headers: {
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-        },
-        method: 'POST',
-    })
-    .catch((e) => {
-        console.log(e)
-        res.status(response.status).json({ error: response.statusText });
-    });
-    console.log(response.body)
+  console.log(inputStr);
+  const inputData = {
+    prompt: inputStr,
+    max_tokens: 200,
+    temperature: 0.7,
+  };
 
-    if (response.ok) {
-        res.status(200).json(response.json());
+  const response = await fetch(
+    "https://api.openai.com/v1/engines/text-davinci-003/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify(inputData),
     }
+  );
+
+  const output = await response.json();
+  console.log(output);
+  const ret = output.choices[0].text;
+
+  return res.status(200).json(ret);
 };
 
 export default generateAction;
