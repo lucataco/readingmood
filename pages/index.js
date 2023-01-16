@@ -4,8 +4,6 @@ import NextImage from "next/image";
 import {
   chakra,
   Box,
-  Card,
-  CardBody,
   Heading,
   Container,
   Text,
@@ -13,18 +11,11 @@ import {
   Stack,
   Link,
   Input,
-  Spinner,
   createIcon,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-  useDisclosure,
   UnorderedList,
   ListItem,
+  Spinner,
+  Skeleton
 } from "@chakra-ui/react";
 
 const Image = chakra(NextImage, {
@@ -45,57 +36,52 @@ const Home = () => {
   const [input, setInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [gptResponse, setGptResponse] = useState(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const generateAction = async () => {
-    onOpen();
+    //Check for empty book title
+    if(input === "") return;
+    setGptResponse(null);
     if (isGenerating) return;
-    console.log("--generateAction index--");
     setIsGenerating(true);
-
-    console.log("--generateAction input--");
-    // console.log(input);
-
     const response = await fetch("/api/generate", {
       method: "POST",
       headers: {
-        "Content-Type": "image/jpeg",
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ input }),
     });
     const data = await response.json();
     console.log(data);
     setGptResponse(data);
-
-    console.log("--generateAction index data--");
-    // console.log(data);
     setIsGenerating(false);
   };
 
   const renderModal = () => {
-    console.log(gptResponse);
-    const data = JSON.parse(gptResponse);
-    console.log(data);
-    const genre = data.Genre;
-    const mood = data.Mood;
-    const songs = data.Songs;
-    console.log("--renderModal--");
-    console.log(genre);
-    console.log(mood);
-    console.log(songs);
+    const genre = gptResponse.Genre;
+    const mood = gptResponse.Mood;
+    const songs = gptResponse.Songs;
+    const listSongs = songs.map((song, i) => {
+      const hyper = 'https://www.youtube.com/results?search_query='+song;
+      return (
+        <ListItem key={i}>
+          <Link href={hyper} isExternal>
+            <Text key={i}>{song}</Text>
+          </Link>
+        </ListItem>
+      );
+    });
     return (
-      <>
-        <Text>Genre:{genre}</Text>
-        <Text>Mood:{mood}</Text>
-        <Text>Song1:{songs[0]}</Text>
-
-        {songs.map((val, i) => {
-          <Text>{songs[i]}</Text>;
-        })}
-      </>
+      <Box align={"left"}>
+        <Text>Genre: {genre}</Text>
+        <Text>Mood: {mood}</Text>
+        <UnorderedList>
+          {listSongs}
+        </UnorderedList>
+      </Box>
     );
   };
 
+  //Updates state to update prompt text
   const onChange = (event) => {
     setInput(event.target.value);
   };
@@ -136,14 +122,30 @@ const Home = () => {
               your book
             </Text>
           </Heading>
-          <Text color={"white.500"}>
+          {(!isGenerating && !gptResponse) ? 
+          (<Text color={"white.500"}>
             Discover the perfect songs for your next book with our book-song
             matching service. Try it now and experience the emotional connection
             between literature and music like never before. Search for your
             favorite book and get a curated list of songs that relate to both
             the genre and mood. Start your journey now, click the search button
             and let's match your next book with the perfect soundtrack!
-          </Text>
+          </Text>)
+          : ( !gptResponse ? (
+              <Skeleton>
+                <div>
+                  Discover the perfect songs for your next book with our book-song
+                  matching service. Try it now and experience the emotional connection
+                  between literature and music like never before. Search for your
+                  favorite book and get a curated list of songs that relate to both
+                  the genre and mood. Start your journey now, click the search button
+                  and let's match your next book with the perfect soundtrack!
+                </div>
+            </Skeleton>
+            ) : (
+              renderModal()
+            ))
+          }
           <Stack
             direction={"row"}
             spacing={2}
@@ -191,33 +193,6 @@ const Home = () => {
           </Text>
         </Container>
       </Box>
-      <>
-        <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>Recommended Songs:</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-              {!gptResponse ? (
-                <Spinner
-                  thickness="4px"
-                  speed="0.65s"
-                  emptyColor="gray.200"
-                  color="orange.500"
-                  size="xl"
-                />
-              ) : (
-                renderModal()
-              )}
-            </ModalBody>
-            <ModalFooter>
-              <Button colorScheme="blue" mr={3} onClick={closeModal}>
-                Close
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-      </>
     </div>
   );
 };
