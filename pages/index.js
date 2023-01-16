@@ -39,7 +39,7 @@ const Home = () => {
 
   const generateAction = async () => {
     //Check for empty book title
-    if(input === "") return;
+    if(input.length < 3 || input.toLowerCase().includes("ignore")) return;
     setGptResponse(null);
     if (isGenerating) return;
     setIsGenerating(true);
@@ -102,20 +102,19 @@ const Home = () => {
           as={Box}
           textAlign={"center"}
           align={"center"}
-          spacing={{ base: 8, md: 14 }}
-          py={{ base: 10, md: 20 }}
+          spacing={{ base: 4, md: 7 }}
+          py={{ base: 4, md: 10 }}
         >
           <Image
             src={"/readingMoodLogo2.png"}
             alt="logo"
-            width="300"
-            height="300"
-            fallbackSrc="https://via.placeholder.com/300"
+            width="500"
+            height="500"
+            fallbackSrc="https://via.placeholder.com/500"
           />
           <Heading
             fontWeight={600}
             fontSize={{ base: "2xl", sm: "4xl", md: "6xl" }}
-            lineHeight={"110%"}
           >
             The perfect songs for <br />
             <Text as="b" color={"orange.400"}>
@@ -158,6 +157,11 @@ const Home = () => {
               size="lg"
               placeholder="Your book title"
               onChange={onChange}
+              onKeyPress={e=> {
+                if (e.key === 'Enter') {
+                  generateAction()
+                }
+             }}
             />
             <Button
               colorScheme={"orange"}
