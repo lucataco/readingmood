@@ -108,9 +108,9 @@ const Home = () => {
           <Image
             src={"/readingMoodLogo2.png"}
             alt="logo"
-            width="500"
-            height="500"
-            fallbackSrc="https://via.placeholder.com/500"
+            width="400"
+            height="400"
+            fallbackSrc="https://via.placeholder.com/400"
           />
           <Heading
             fontWeight={600}
