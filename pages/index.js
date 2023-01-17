@@ -14,9 +14,11 @@ import {
   createIcon,
   UnorderedList,
   ListItem,
-  Spinner,
-  Skeleton
+  Skeleton,
+  Divider,
+  Center
 } from "@chakra-ui/react";
+import { FaYoutube, FaSoundcloud, FaSpotify } from 'react-icons/fa';
 
 const Image = chakra(NextImage, {
   shouldForwardProp: (prop) =>
@@ -49,31 +51,70 @@ const Home = () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ input }),
+    })
+    .catch((err) =>{
+      console.log(err);
+      setGptResponse("An error occured, please try again");
+      setIsGenerating(false);
     });
-    const data = await response.json();
-    console.log(data);
-    setGptResponse(data);
-    setIsGenerating(false);
+    try{
+      const responseJson = await response.json();
+      var text = responseJson.choices[0].text;
+      const data = JSON.parse(text);
+      setGptResponse(data);
+      setIsGenerating(false);
+    }catch(err){
+      console.log("Error parsing data from OpenAi, please try again")
+      setGptResponse("Error");
+      setIsGenerating(false);
+    }
   };
 
   const renderModal = () => {
+    console.log("--renderModal--")
+    console.log(gptResponse)
+    if(gptResponse === "Error")return (<Text as="i" color="orange">Error parsing data from OpenAi, please try again</Text>);
     const genre = gptResponse.Genre;
     const mood = gptResponse.Mood;
     const songs = gptResponse.Songs;
     const listSongs = songs.map((song, i) => {
-      const hyper = 'https://www.youtube.com/results?search_query='+song;
+      const ytlink = 'https://www.youtube.com/results?search_query='+song;
+      const sclink = 'https://soundcloud.com/search?q='+song;
+      const splink = 'https://open.spotify.com/search/'+song;
       return (
-        <ListItem key={i}>
-          <Link href={hyper} isExternal>
-            <Text key={i}>{song}</Text>
-          </Link>
+        <ListItem key={i} pb="2">
+          <Stack direction={"row"} spacing="4" >
+            <Link href={ytlink} isExternal>
+              <Button backgroundColor="red" width="20">
+                <FaYoutube />
+              </Button>
+            </Link>
+            <Link href={sclink} isExternal>
+              <Button backgroundColor="orange" width="20">
+                <FaSoundcloud />
+              </Button>
+            </Link>
+            <Link href={splink} isExternal>
+              <Button backgroundColor="green.600" width="20">
+                <FaSpotify />
+              </Button>
+            </Link>
+            <Text pt="1"fontSize="lg">{song}</Text>
+          </Stack>
         </ListItem>
       );
     });
     return (
-      <Box align={"left"}>
-        <Text>Genre: {genre}</Text>
-        <Text>Mood: {mood}</Text>
+      <Box align={"left"} px="4">
+        <Stack direction={"row"} textAlign={"center"}>
+          <Text color="orange.500" fontSize="lg">Genre:</Text><Text fontSize="lg">{genre}</Text>
+        </Stack>
+        <Stack direction={"row"} textAlign={"center"}>
+          <Text color="orange.500" fontSize="lg">Mood:</Text><Text fontSize="lg">{mood}</Text>
+        </Stack>
+        <Center height='20px'>
+          <Divider />
+          </Center>
         <UnorderedList>
           {listSongs}
         </UnorderedList>
@@ -114,7 +155,7 @@ const Home = () => {
           />
           <Heading
             fontWeight={600}
-            fontSize={{ base: "2xl", sm: "4xl", md: "6xl" }}
+            fontSize={{ base: "3xl", sm: "2xl", md: "5xl" }}
           >
             The perfect songs for <br />
             <Text as="b" color={"orange.400"}>
@@ -183,7 +224,7 @@ const Home = () => {
         <Container
           as={Stack}
           maxW={"6xl"}
-          py={4}
+          py={2}
           direction={"column"}
           spacing={4}
           justify={"center"}

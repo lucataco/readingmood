@@ -19,12 +19,14 @@ const generateAction = async (req, res) => {
       },
       body: JSON.stringify(inputData),
     }
-  );
+  )
+  .catch((err) =>{
+    console.log(err);
+    return res.status(400).json("An error occured, please try again");
+  });
 
   const output = await response.json();
-  const ret = output.choices[0].text.trim();
-  const test = JSON.parse(ret);
-  return res.status(200).json(test);
+  return res.status(200).json(output);
 };
 
 export default generateAction;
